@@ -1,4 +1,4 @@
-import Link from "next/link";             // ★ 追加
+import Link from "next/link";
 import { fetchHN } from "@/lib/fetchHN";
 
 export const revalidate = 3600;
@@ -11,9 +11,16 @@ const KEYWORDS = {
 } as const;
 type PathKey = keyof typeof KEYWORDS;
 
-export default async function Page({ params }: { params: { q: string } }) {
-  const key = (params.q || "").toLowerCase() as PathKey;
+export default async function Page({
+  params,
+}: {
+  // ★ Next.js 15 では Promise になっている
+  params: Promise<{ q: string }>;
+}) {
+  const { q: raw } = await params; // ★ いったん await して取り出す
+  const key = (raw || "").toLowerCase() as PathKey;
   const q = KEYWORDS[key] ?? "AI";
+
   const items = await fetchHN(q);
 
   return (
@@ -24,7 +31,6 @@ export default async function Page({ params }: { params: { q: string } }) {
           <p className="text-sm text-neutral-500">無料API / ISR(1h) / Vercel Hobby</p>
         </div>
 
-        {/* ★ 内部リンクは Link を使う */}
         <nav className="flex gap-2">
           {Object.entries(KEYWORDS).map(([k, label]) => {
             const active = k === key || (!KEYWORDS[key] && k === "ai");
@@ -57,7 +63,6 @@ export default async function Page({ params }: { params: { q: string } }) {
         <ul className="grid gap-3">
           {items.map((it) => (
             <li key={it.id} className="rounded-2xl border p-4 hover:shadow-sm transition">
-              {/* 外部リンクは a のままでOK */}
               <a
                 href={it.url ?? `https://news.ycombinator.com/item?id=${it.id}`}
                 target="_blank"
