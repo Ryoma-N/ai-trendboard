@@ -1,19 +1,18 @@
+import Link from "next/link";             // ★ 追加
 import { fetchHN } from "@/lib/fetchHN";
 
 export const revalidate = 3600;
 
-// パス名と実際のクエリをマッピング
 const KEYWORDS = {
   ai: "AI",
   llm: "LLM",
   rag: "RAG",
   langchain: "LangChain",
 } as const;
-
 type PathKey = keyof typeof KEYWORDS;
 
 export default async function Page({ params }: { params: { q: string } }) {
-  const key = params.q?.toLowerCase() as PathKey;
+  const key = (params.q || "").toLowerCase() as PathKey;
   const q = KEYWORDS[key] ?? "AI";
   const items = await fetchHN(q);
 
@@ -24,11 +23,13 @@ export default async function Page({ params }: { params: { q: string } }) {
           <h1 className="text-3xl font-bold">AI Trend Dashboard</h1>
           <p className="text-sm text-neutral-500">無料API / ISR(1h) / Vercel Hobby</p>
         </div>
+
+        {/* ★ 内部リンクは Link を使う */}
         <nav className="flex gap-2">
           {Object.entries(KEYWORDS).map(([k, label]) => {
             const active = k === key || (!KEYWORDS[key] && k === "ai");
             return (
-              <a
+              <Link
                 key={k}
                 href={`/${k}`}
                 className={`rounded-lg border px-3 py-1 text-sm transition ${
@@ -38,15 +39,15 @@ export default async function Page({ params }: { params: { q: string } }) {
                 }`}
               >
                 {label}
-              </a>
+              </Link>
             );
           })}
-          <a
+          <Link
             href="/about"
             className="ml-2 rounded-lg border px-3 py-1 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
             About
-          </a>
+          </Link>
         </nav>
       </header>
 
@@ -56,9 +57,11 @@ export default async function Page({ params }: { params: { q: string } }) {
         <ul className="grid gap-3">
           {items.map((it) => (
             <li key={it.id} className="rounded-2xl border p-4 hover:shadow-sm transition">
+              {/* 外部リンクは a のままでOK */}
               <a
                 href={it.url ?? `https://news.ycombinator.com/item?id=${it.id}`}
                 target="_blank"
+                rel="noreferrer"
                 className="font-medium underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-700"
               >
                 {it.title || "(no title)"}
