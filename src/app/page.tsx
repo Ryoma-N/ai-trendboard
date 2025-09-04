@@ -1,10 +1,19 @@
 import { fetchHN } from "@/lib/fetchHN";
 
-const KEYWORDS = ["AI", "LLM", "RAG", "LangChain"];
+const KEYWORDS = ["AI", "LLM", "RAG", "LangChain"] as const;
 export const revalidate = 3600;
 
-export default async function Page({ searchParams }: { searchParams?: { q?: string } }) {
-  const q = (searchParams?.q && KEYWORDS.includes(searchParams.q)) ? searchParams.q : "AI";
+// ✅ Next.js App Router の searchParams 形に合わせる
+type PageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default async function Page({ searchParams }: PageProps) {
+  // q は string | string[] | undefined のどれかで来る可能性がある
+  const raw = searchParams?.q;
+  const qCandidate = Array.isArray(raw) ? raw[0] : raw;
+  const q = KEYWORDS.includes((qCandidate as any)) ? (qCandidate as string) : "AI";
+
   const items = await fetchHN(q);
 
   return (
@@ -15,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams?: { q?: stri
           <p className="text-sm text-neutral-500">無料API / ISR(1h) / Vercel Hobby</p>
         </div>
         <nav className="flex gap-2">
-          {KEYWORDS.map(k => (
+          {KEYWORDS.map((k) => (
             <a
               key={k}
               href={`/?q=${encodeURIComponent(k)}`}
@@ -36,7 +45,7 @@ export default async function Page({ searchParams }: { searchParams?: { q?: stri
         <p className="text-red-600">ニュース取得に失敗したか、該当がない。</p>
       ) : (
         <ul className="grid gap-3">
-          {items.map(it => (
+          {items.map((it) => (
             <li key={it.id} className="rounded-2xl border p-4 hover:shadow-sm transition">
               <a
                 href={it.url ?? `https://news.ycombinator.com/item?id=${it.id}`}
