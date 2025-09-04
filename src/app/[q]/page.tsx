@@ -2,18 +2,19 @@ import { fetchHN } from "@/lib/fetchHN";
 
 export const revalidate = 3600;
 
-// URL の小文字パス → 実際に検索する語
-const MAP = {
+// パス名と実際のクエリをマッピング
+const KEYWORDS = {
   ai: "AI",
   llm: "LLM",
   rag: "RAG",
   langchain: "LangChain",
 } as const;
-type PathKey = keyof typeof MAP;
+
+type PathKey = keyof typeof KEYWORDS;
 
 export default async function Page({ params }: { params: { q: string } }) {
-  const key = (params.q || "").toLowerCase() as PathKey;
-  const q = MAP[key] ?? "AI"; // 想定外のパスでも AI にフォールバック
+  const key = params.q?.toLowerCase() as PathKey;
+  const q = KEYWORDS[key] ?? "AI";
   const items = await fetchHN(q);
 
   return (
@@ -24,8 +25,8 @@ export default async function Page({ params }: { params: { q: string } }) {
           <p className="text-sm text-neutral-500">無料API / ISR(1h) / Vercel Hobby</p>
         </div>
         <nav className="flex gap-2">
-          {Object.keys(MAP).map((k) => {
-            const active = k === key || (!MAP[key] && k === "ai");
+          {Object.entries(KEYWORDS).map(([k, label]) => {
+            const active = k === key || (!KEYWORDS[key] && k === "ai");
             return (
               <a
                 key={k}
@@ -36,7 +37,7 @@ export default async function Page({ params }: { params: { q: string } }) {
                     : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 }`}
               >
-                {MAP[k as PathKey]}
+                {label}
               </a>
             );
           })}
